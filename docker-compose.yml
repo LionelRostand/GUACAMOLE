@@ -1,0 +1,15 @@
+version: '3'
+services:
+  guacdb:
+    container_name: guacdb
+    image: mariadb/server:latest
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 'MariaDBRootPSW'
+      MYSQL_DATABASE: 'guacamole_db'
+      MYSQL_USER: 'guacamole_user'
+      MYSQL_PASSWORD: 'MariaDBUserPSW'
+    volumes:
+      - 'guacdb-data:/var/lib/mysql'
+volumes:
+  guacdb-data:

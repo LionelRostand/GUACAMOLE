@@ -1,34 +1,60 @@
-version: "2.1"
+version: '3.8'
+
 services:
-  guacamole:
-    image: guacamole/guacamole
-    container_name: some-guacamole
+  db:
+    image: postgres:13.0
+    container_name: db
+    restart: always
     environment:
-      - MYSQL_DATABASE=guacamole_db
-      - MYSQL_USER=guacamole_user
-      - MYSQL_PASSWORD=some_password
-      - GUACD_HOSTNAME=some-guacd
-      - GUACD_PORT=4822
-      - MYSQL_HOSTNAME=some-mysql
-      - MYSQL_PORT=3306
-      - TZ=Europe/Paris
-    ports:
-      - 8080:8080
-    restart: unless-stopped
+      - POSTGRES_USER=trasauser
+      - POSTGRES_PASSWORD=trasauser
+      - POSTGRES_DB=trasadb
+    volumes:
+      - ./trasa_data/postgre:/var/lib/postgresql/data
+    networks:
+      - trasa
+
+  redis:
+    image: redis:6.0.8
+    container_name: redis
+    restart: always
+    networks:
+      - trasa
 
   guacd:
-    image: guacamole/guacd
-    container_name: some-guacd
-    restart: unless-stopped
-
-  mysql:
-    image: mysql
-    container_name: some-mysql
-    environment:
-      - MYSQL_DATABASE=guacamole_db
-      - MYSQL_USER=guacamole_user
-      - MYSQL_PASSWORD=some_password
-      - MYSQL_ROOT_PASSWORD=example
+    image: seknox/guacd:v0.0.1
+    container_name: guacd
+    user: root
+    restart: always
     volumes:
-      -  /home/config/guacamole:/var/lib/mysql
-    restart: unless-stopped
+      - /tmp/trasa/accessproxy/guac:/tmp/trasa/accessproxy/guac
+    networks:
+      - trasa
+
+  trasa_app:
+    image: seknox/trasa:v1.1.4
+    container_name: trasa_app
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+      - 8022:8022
+    environment:
+      - TRASA.LISTENADDR=IP_SERVER
+      - TRASA.AUTOCERT=false
+      - DATABASE.SERVER=db
+      - REDIS.SERVER=redis:6379
+      - PROXY.GUACDADDR=guacd:4822
+    volumes:
+      - /tmp/trasa/accessproxy/guac:/tmp/trasa/accessproxy/guac
+    links:
+      - db:db
+      - redis:redis
+      - guacd:guacd
+    networks:
+      - trasa
+  
+networks:
+  trasa:
+    driver: bridge
+    name: trasa

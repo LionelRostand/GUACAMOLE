@@ -1,47 +1,38 @@
-version: "2"
+version: '3'
 services:
+
   guacdb:
     container_name: guacdb
-    hostname: guacdb
-    image: mariadb:latest
-    volumes:
-      - guac_db_data:/var/lib/mysql
+    image: mariadb/server:latest
+    restart: unless-stopped
     environment:
-      - MYSQL_ROOT_PASSWORD=AvousdeVoir
-    expose:
-      - "3306"
+      MYSQL_ROOT_PASSWORD: 'MariaDBRootPSW'
+      MYSQL_DATABASE: 'guacamole_db'
+      MYSQL_USER: 'guacamole_user'
+      MYSQL_PASSWORD: 'MariaDBUserPSW'
+    volumes:
+      - 'guacdb-data:/var/lib/mysql'
+
   guacd:
     container_name: guacd
-    hostname: guacd
-    image: "guacamole/guacd:latest"
-    restart: always
-    volumes:
-      - "guacd_data:/data"
-      - "guacd_conf:/conf:ro"
-    expose:
-      - "4822"
+    image: guacamole/guacd
+    restart: unless-stopped
+
   guacamole:
-    image: "guacamole/guacamole:latest"
     container_name: guacamole
-    hostname: guacamole
-    restart: always
-    depends_on:
-      - guacd
-      - guacdb
-    volumes:
-      - "guac_data:/data"
-      - "guac_conf:/conf:ro"
+    image: 'guacamole/guacamole:latest'
+    restart: unless-stopped
     ports:
-      - "80:8084"
-    links:
-      - "guacdb:database"
-      - "guacd:guacd"
+      - '8080:8080'
     environment:
-      - "GUACD_HOSTNAME=guacd"
-      - "GUACD_PORT=4822"
-      - "MYSQL_HOSTNAME=database"
-      - "MYSQL_PORT=3306"
-      - "MYSQL_DATABASE=guacamole"
-      - "MYSQL_USER=guac"
-      - "MYSQL_PASSWORD=trolololo
-      - "GUACAMOLE_HOME=/data"
+      GUACD_HOSTNAME: "guacd"
+      MYSQL_HOSTNAME: "guacdb"
+      MYSQL_DATABASE: "guacamole_db"
+      MYSQL_USER: "guacamole_user"
+      MYSQL_PASSWORD: "MariaDBUserPSW"
+    depends_on:
+      - guacdb
+      - guacd
+
+volumes:
+  guacdb-data:

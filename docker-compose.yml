@@ -1,12 +1,8 @@
-version: "2"
+version: "2.1"
 services:
-  guacamole:
-    image: oznu/guacamole
-    container_name: guacamole
-    volumes:
-      - postgres:/config
+  guacd:
+    image: lscr.io/linuxserver/guacd:latest
+    container_name: guacd
     ports:
-      - 8080:8080
-volumes:
-  postgres:
-    driver: local
+      - 4822:4822
+    restart: unless-stopped
